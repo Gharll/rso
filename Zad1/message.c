@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DATA_MAX_SIZE 32
+#define DATA_MAX_SIZE 128
 #define SQRT_REQUEST_CODE "0001"
 #define SQRT_RESPONSE_CODE "1001"
 #define TIME_REQUEST_CODE "0002"
@@ -74,8 +74,9 @@ void deserialize_message(message * self, byte * buffor){
 }
 
 char * get_message_code(message * self){
-    char * code = malloc(sizeof(self->message_code));
+    char * code = malloc(sizeof(self->message_code) + 1);
     memcpy(code, self->message_code, sizeof(self->message_code));
+    code[4] = '\0';
     return code;
 }
 

@@ -14,7 +14,10 @@ int get_next_id(){
     return id++;
 }
 
+static int request_counter = 0;
+
 void send_sqrt_request(int sockfd, double number){
+    request_counter++;
     printf("Send sqrt request\n");
     message request;
     char code [4] = SQRT_REQUEST_CODE;
@@ -28,6 +31,7 @@ void send_sqrt_request(int sockfd, double number){
 }
 
 void send_time_request(int sockfd){
+    request_counter++;
     printf("Send time request\n");
     message request;
     char code [4] = TIME_REQUEST_CODE;
@@ -44,21 +48,27 @@ void read_and_handle_data(int sockfd){
     while(1){
 
         message response;
+        printf("Reading... \n");
         int buffor_len = read (sockfd, buffor, get_message_size());
+        printf("Buffor_len: %d\n", buffor_len);
         if(buffor_len < 1) break;
         deserialize_message(&response, buffor);
         char * message_code = get_message_code(&response);
         printf("The message code: %s \n", message_code);
+
         if(strcmp(message_code,  SQRT_RESPONSE_CODE) == 0){
+            request_counter--;
             printf("The sqrt number: %f\n", get_number(&response));
         }
 
-        if(strcmp(message_code, TIME_RESPONSE_CODE) == 0){
+        else if(strcmp(message_code, TIME_RESPONSE_CODE) == 0) {
+            request_counter--;
             int len = get_length(&response);
-            char * msg = get_time(&response, len);
-            printf("Len: %d\n", len);
-            printf("Msg: %s\n", msg);
+            char *msg = get_time(&response, len);
+            printf("The time: %s\n", msg);
         }
+
+        if(request_counter == 0) break;
     }
 
     free(buffor);
@@ -93,9 +103,12 @@ int main ()
     /*  We can now read/write via sockfd.  */
     send_time_request(sockfd);
     send_sqrt_request(sockfd, 5.2123);
+    write (sockfd, NULL, 1);
+
 
     read_and_handle_data(sockfd);
 
+    close (sockfd);
 
     exit (0);
 }
