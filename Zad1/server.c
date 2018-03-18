@@ -46,6 +46,7 @@ int main ()
         /*  Fork to create a process for this client and perform a test to see
             whether we're the parent or the child.  */
 
+
         if (fork () == 0)
         {
 
@@ -53,62 +54,54 @@ int main ()
                 The five second delay is just for this demonstration.  */
             printf("forked\n");
 
-            
             message request;
             int message_len = get_message_size();
             byte * buffor = (byte*)malloc(message_len);
-            read (client_sockfd, buffor, message_len);
-            deserialize_message(&request, buffor);
 
-            char * message_code = get_message_code(&request);
-            printf("The message code: %s\n", message_code);
-            if(strcmp(message_code, SQRT_REQUEST_CODE) == 0){
-                int id = get_rq_id(&request);
-                double number = get_number(&request);
-                double sqrt_number = sqrt(number);
 
-                message response;
-                byte code [4] = SQRT_RESPONSE_CODE;
-                write_message_code(&response, code);
-                write_rq_id(&response, get_rq_id(&request));
-                write_number(&response, sqrt_number);
+            while(1){
+                int buffor_len = read (client_sockfd, buffor, message_len);
+                if(buffor_len < 1) break;
 
-                byte * buffor = serialize_message(&response);
-                /*message test;
-                deserialize_message(&test, buffor);
-                printf("%s, %d, %f \n", get_message_code(&test), get_rq_id(&test), get_number(&test));
-                */
-                write (client_sockfd, buffor, get_message_size());
-                printf("Send sqrt response\n");
+                deserialize_message(&request, buffor);
+                char * message_code = get_message_code(&request);
+                printf("The message code: %s\n", message_code);
+
+                if(strcmp(message_code, SQRT_REQUEST_CODE) == 0){
+                    int id = get_rq_id(&request);
+                    double number = get_number(&request);
+                    double sqrt_number = sqrt(number);
+
+                    message response;
+                    byte code [4] = SQRT_RESPONSE_CODE;
+                    write_message_code(&response, code);
+                    write_rq_id(&response, get_rq_id(&request));
+                    write_number(&response, sqrt_number);
+
+                    byte * buffor = serialize_message(&response);
+                    write (client_sockfd, buffor, get_message_size());
+                    printf("Send sqrt response\n");
+                }
+
+                if(strcmp(message_code, TIME_REQUEST_CODE) == 0){
+                    int id = get_rq_id(&request);
+
+                    message response;
+                    byte code [4] = TIME_RESPONSE_CODE;
+                    write_message_code(&response, code);
+                    write_rq_id(&response, get_rq_id(&request));
+                    write_length(&response, 3);
+                    write_time(&response, "abc", 3);
+
+                    byte * buffor = serialize_message(&response);
+
+                    write (client_sockfd, buffor, get_message_size());
+                    free(buffor);
+                    printf("Send time response\n");
+
+                }
             }
 
-            if(strcmp(message_code, TIME_REQUEST_CODE) == 0){
-                int id = get_rq_id(&request);
-
-                message response;
-                byte code [4] = TIME_RESPONSE_CODE;
-                write_message_code(&response, code);
-                write_rq_id(&response, get_rq_id(&request));
-                write_length(&response, 3);
-                write_time(&response, "abc", 3);
-
-                byte * buffor = serialize_message(&response);
-
-                /*message test;
-                deserialize_message(&test, buffor);
-                int len = get_length(&test);
-                char * msg = get_time(&test, len);
-
-                printf("Len: %d\n", len);
-
-
-                printf("Msg: %s\n", msg);*/
-
-                write (client_sockfd, buffor, get_message_size());
-                free(buffor);
-                printf("Send time response\n");
-
-            }
 
 
             printf("Close connection\n");
