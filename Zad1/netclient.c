@@ -55,6 +55,8 @@ void read_and_handle_data(int sockfd){
         deserialize_message(&response, buffor);
         char * message_code = get_message_code(&response);
         printf("The message code: %s \n", message_code);
+        int id = get_rq_id(&response);
+        printf("ID: %d \n", id);
 
         if(strcmp(message_code,  SQRT_RESPONSE_CODE) == 0){
             request_counter--;
@@ -103,6 +105,8 @@ int main ()
     /*  We can now read/write via sockfd.  */
     send_time_request(sockfd);
     send_sqrt_request(sockfd, 5.2123);
+
+
     write (sockfd, NULL, 1);
 
 

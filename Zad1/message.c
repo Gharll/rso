@@ -14,19 +14,50 @@ typedef struct message{
     byte data[DATA_MAX_SIZE];
 }message;
 
+double reverseDouble(double number){
+    printf("Reverse data\n");
+    double result;
+    byte *dest = (byte*) malloc(sizeof(double));
+    byte *data = (byte *)malloc(sizeof(double));
+    memcpy(data, &number, sizeof(double));
+    for(int i=0; i<sizeof(double); i++)
+        dest[i] = data[sizeof(double)-i-1];
+
+    memcpy(&result, dest, sizeof(double));
+    return result;
+}
+
+
+double get_big_endian_double(double number){
+    if (__FLOAT_WORD_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+        return reverseDouble(number);
+    else
+        return number;
+}
+
+/*double get_little_endian_double(double number){
+    if (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)
+        return reverseDouble(number);
+    else
+        return number;
+}*/
+
 void write_message_code(message * self, char * code){
     memcpy(self->message_code, code, 4 * sizeof(char));
 }
 
 void write_rq_id(message * self, int rq_id){
+    rq_id = htonl(rq_id);
     memcpy(self->rq_id, &rq_id, sizeof(int));
 }
 
 void write_number(message * self, double number){
+    number = get_big_endian_double(number);
     memcpy(self->data, &number, sizeof(double));
 }
 
 void write_length(message * self, int length){
+    length = htonl(length);
     memcpy(self->data, &length, sizeof(int));
 }
 
@@ -83,18 +114,20 @@ char * get_message_code(message * self){
 int get_rq_id(message * self){
     int rq_id = -1;
     memcpy(&rq_id, self->rq_id, sizeof(int));
+    rq_id = ntohl(rq_id);
     return rq_id;
 }
 
 double get_number(message * self){
-    double number = -1;
+    double number;
     memcpy(&number, self->data, sizeof(double));
-    return number;
+    return get_big_endian_double(number);
 }
 
 int get_length(message * self){
     int length = -1;
     memcpy(&length, self->data, sizeof(int));
+    length = ntohl(length);
     return length;
 }
 
@@ -112,6 +145,9 @@ int get_base_message_size(){
 int get_message_size(){
     return get_base_message_size() + DATA_MAX_SIZE;
 }
+
+
+
 
 
 

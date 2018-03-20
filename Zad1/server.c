@@ -13,6 +13,7 @@ void send_sqrt_response(int sockfd, message * request){
     int id = get_rq_id(request);
     double number = get_number(request);
     double sqrt_number = sqrt(number);
+    printf("The number: %f and sqrt: %f\n", number, sqrt_number);
 
     message response;
     byte code [4] = SQRT_RESPONSE_CODE;
